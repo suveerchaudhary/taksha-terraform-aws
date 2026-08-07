@@ -1,5 +1,5 @@
 # Provider + module call for dev
-# testing PR workflow
+# testing PR workflow - if this file is changed, the PR workflow will run
 terraform {
   required_version = ">= 1.6.0"
   required_providers {

@@ -1,7 +1,8 @@
 # Inputs for the dev environment
 variable "instance_type" {
-  type    = string
-  default = "t3.nano"
+  type        = string
+  default     = "t3.nano"
+  description = "The type of instance to use for the EC2 instance"
 }
 
 variable "allowed_ssh_cidr" {
