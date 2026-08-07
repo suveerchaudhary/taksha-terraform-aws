@@ -9,9 +9,12 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [dev, test, prod]
     defaults:
       run:
-        working-directory: environments/dev
+        working-directory: environments/${{ matrix.environment }}
     steps:
       - uses: actions/checkout@v4
 

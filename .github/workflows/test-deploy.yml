@@ -1,0 +1,40 @@
+# Test = staging. Auto-triggers on push to main, but the "test" GitHub
+# Environment requires a reviewer approval (configured in Settings),
+# so the job pauses here until you click Approve in the Actions tab.
+name: Deploy - Test
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'environments/test/**'
+      - 'modules/**'
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: test   # <-- required reviewer approval happens here
+    defaults:
+      run:
+        working-directory: environments/test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-west-2
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - run: terraform init
+      - run: terraform validate
+      - run: terraform plan -out=tfplan
+      - run: terraform apply -auto-approve tfplan

@@ -1,0 +1,71 @@
+# Prod = highest ceremony. Two stages:
+# 1. plan - runs unattended, posts the plan for review, saves it as an artifact
+# 2. apply - pauses for approval on the "prod" environment, then applies
+#    that EXACT reviewed plan file (not a fresh one)
+name: Deploy - Prod
+
+on:
+  workflow_dispatch: {}   # manual trigger only - no auto-deploy to prod
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: environments/prod
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-west-2
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - run: terraform init
+      - run: terraform validate
+      - run: terraform plan -out=tfplan
+
+      - name: Post plan to job summary
+        run: terraform show -no-color tfplan >> $GITHUB_STEP_SUMMARY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prod-tfplan
+          path: environments/prod/tfplan
+          retention-days: 5
+
+  apply:
+    needs: plan
+    runs-on: ubuntu-latest
+    environment: prod   # <-- required reviewer approval happens here
+    defaults:
+      run:
+        working-directory: environments/prod
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-west-2
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - run: terraform init
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: prod-tfplan
+          path: environments/prod
+
+      - run: terraform apply -auto-approve tfplan
