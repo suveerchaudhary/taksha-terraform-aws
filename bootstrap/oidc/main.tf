@@ -44,7 +44,8 @@ resource "aws_iam_role" "github_actions" {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
         }
         StringLike = {
-          "token.actions.githubusercontent.com:sub" = "repo:suveerchaudhary/taksha-terraform-aws:environment:${each.key}"
+        # New immutable format (repos created after July 15, 2026 use owner-id/repo-id, not just names)
+        "token.actions.githubusercontent.com:sub" = "repo:suveerchaudhary@7366297/taksha-terraform-aws@1326214576:environment:${each.key}"
         }
       }
     }]
