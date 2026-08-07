@@ -19,4 +19,5 @@ module "ec2" {
   environment      = "prod"
   instance_type    = var.instance_type
   allowed_ssh_cidr = var.allowed_ssh_cidr
+  enable_termination_protection = true # Enable termination protection for the EC2 instance in PROD
 }
