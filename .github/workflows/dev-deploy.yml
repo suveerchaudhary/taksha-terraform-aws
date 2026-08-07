@@ -23,7 +23,14 @@ jobs:
         working-directory: environments/dev
     steps:
       - uses: actions/checkout@v4
-
+      - name: Debug - print OIDC token claims
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const token = await core.getIDToken('sts.amazonaws.com');
+            const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+            console.log('aud:', payload.aud);
+            console.log('sub:', payload.sub);
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
