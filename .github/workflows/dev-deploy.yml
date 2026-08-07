@@ -1,0 +1,40 @@
+# Auto-deploys dev whenever environments/dev or modules changes on main.
+# No approval needed - dev is meant to be fast, disposable feedback.
+name: Deploy - Dev
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'environments/dev/**'
+      - 'modules/**'
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write   # required for OIDC - lets this job request a short-lived AWS token
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: dev   # maps to the GitHub Environment you just configured
+    defaults:
+      run:
+        working-directory: environments/dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-west-2
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - run: terraform init
+      - run: terraform validate
+      - run: terraform plan -out=tfplan
+      - run: terraform apply -auto-approve tfplan
