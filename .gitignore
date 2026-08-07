@@ -4,6 +4,6 @@
 *.tfstate.*
 *.tfplan
 .terraform.lock.hcl
-/* .terraform.lock.hcl is debated — some teams commit it (it pins exact provider versions for reproducibility), others don't for personal/learning repos.
-I'll leave it ignored for now to keep things simple; we can revisit later.
-*/
+# .terraform.lock.hcl is debated — some teams commit it (it pins exact provider versions for reproducibility), others don't for personal/learning repos.
+#I'll leave it ignored for now to keep things simple; we can revisit later.
+#
