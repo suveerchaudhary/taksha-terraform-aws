@@ -17,10 +17,10 @@ provider "aws" {
 # This is a one-time, account-wide resource - only ever created once,
 # no matter how many repos/roles use it later.
 resource "aws_iam_openid_connect_provider" "github" {
-  url             = "https://token.actions.githubusercontent.com"
-  client_id_list  = ["sts.amazonaws.com"]
+  url            = "https://token.actions.githubusercontent.com"
+  client_id_list = ["sts.amazonaws.com"]
   # This is the SHA-1 thumbprint for the GitHub OIDC token issuer. fixed, published value everyone using GitHub Actions + AWS OIDC uses verbatim
-  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"] 
+  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
 }
 
 # One IAM role per environment. Each is only assumable by workflow runs
