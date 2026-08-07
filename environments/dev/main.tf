@@ -20,5 +20,4 @@ module "ec2" {
   environment      = "dev"
   instance_type    = var.instance_type
   allowed_ssh_cidr = var.allowed_ssh_cidr
-  description      = "EC2 instance for the dev environment"
 }
