@@ -1,5 +1,9 @@
 # Auto-deploys dev whenever environments/dev or modules changes on main.
 # No approval needed - dev is meant to be fast, disposable feedback.
+#
+# Manual runs (workflow_dispatch) can override instance_type via the dropdown.
+# IAM guardrails in bootstrap/oidc only allow t3.nano and t3.micro; t3.large
+# will fail at apply (useful to verify the Deny policy).
 name: Deploy - Dev
 
 on:
@@ -8,7 +12,17 @@ on:
     paths:
       - 'environments/dev/**'
       - 'modules/**'
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      instance_type:
+        description: 'EC2 instance type (IAM allows t3.nano/t3.micro only)'
+        type: choice
+        required: true
+        default: t3.nano
+        options:
+          - t3.nano
+          - t3.micro
+          - t3.large
 
 permissions:
   id-token: write   # required for OIDC - lets this job request a short-lived AWS token
@@ -23,6 +37,7 @@ jobs:
         working-directory: environments/dev
     steps:
       - uses: actions/checkout@v4
+
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -32,6 +47,12 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.9.0"
+
+      - name: Set instance type (manual runs only)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "instance_type=${{ inputs.instance_type }}" >> "$GITHUB_ENV"
+          echo "TF_VAR_instance_type=${{ inputs.instance_type }}" >> "$GITHUB_ENV"
 
       - run: terraform init
       - run: terraform validate
