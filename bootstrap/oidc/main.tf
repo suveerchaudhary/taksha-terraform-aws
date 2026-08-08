@@ -59,41 +59,84 @@ resource "aws_iam_role_policy" "permissions" {
 
   name = "terraform-permissions"
   role = each.value.id
-
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "EC2"
+        # Read-only, safe to leave broad - Describe* actions expose no risk
+        Sid      = "EC2ReadOnly"
+        Effect   = "Allow"
+        Action   = ["ec2:Describe*"]
+        Resource = "*"
+      },
+      {
+        # Write actions - only allowed for instances requesting a cheap type
+        Sid    = "EC2WriteRestrictedType"
         Effect = "Allow"
         Action = [
-          "ec2:Describe*",
           "ec2:RunInstances",
           "ec2:TerminateInstances",
           "ec2:StopInstances",
           "ec2:StartInstances",
           "ec2:CreateTags",
           "ec2:DeleteTags",
+          "ec2:ModifyInstanceAttribute"
+        ]
+        Resource = [
+          "arn:aws:ec2:*:*:instance/*",
+          "arn:aws:ec2:*:*:volume/*",
+          "arn:aws:ec2:*:*:network-interface/*",
+          "arn:aws:ec2:*:*:security-group/*",
+          "arn:aws:ec2:*:*:subnet/*",
+          "arn:aws:ec2:*:*:key-pair/*"
+        ]
+        Condition = {
+          StringEquals = {
+            "ec2:InstanceType" = ["t3.nano", "t3.micro"]
+          }
+        }
+      },
+      {
+        # Safety net: explicitly DENY launching anything NOT in the cheap
+        # list, regardless of what any Allow statement says. Deny always
+        # wins in IAM - this protects against a typo'd instance_type even
+        # if the condition above were ever misconfigured.
+        Sid       = "DenyExpensiveInstanceTypes"
+        Effect    = "Deny"
+        Action    = "ec2:RunInstances"
+        Resource  = "arn:aws:ec2:*:*:instance/*"
+        Condition = {
+          StringNotEquals = {
+            "ec2:InstanceType" = ["t3.nano", "t3.micro"]
+          }
+        }
+      },
+      {
+        # Allow creation, deletion, and modification of security groups
+        Sid    = "SecurityGroupManagement"
+        Effect = "Allow"
+        Action = [
           "ec2:CreateSecurityGroup",
           "ec2:DeleteSecurityGroup",
           "ec2:AuthorizeSecurityGroupIngress",
           "ec2:AuthorizeSecurityGroupEgress",
           "ec2:RevokeSecurityGroupIngress",
-          "ec2:RevokeSecurityGroupEgress",
-          "ec2:ModifyInstanceAttribute"
+          "ec2:RevokeSecurityGroupEgress"
         ]
         Resource = "*"
       },
       {
-        Sid    = "StateBucket"
-        Effect = "Allow"
-        Action = ["s3:GetObject", "s3:PutObject", "s3:ListBucket"]
+        # Allow read, write, and list operations on the state bucket
+        Sid      = "StateBucket"
+        Effect   = "Allow"
+        Action   = ["s3:GetObject", "s3:PutObject", "s3:ListBucket"]
         Resource = [
           "arn:aws:s3:::taksha-tf-state-bucket-219322923434",
           "arn:aws:s3:::taksha-tf-state-bucket-219322923434/*"
         ]
       },
       {
+        # Allow read, write, and delete operations on the state lock table
         Sid      = "StateLock"
         Effect   = "Allow"
         Action   = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem"]
