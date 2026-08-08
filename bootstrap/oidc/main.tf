@@ -69,30 +69,31 @@ resource "aws_iam_role_policy" "permissions" {
         Action   = ["ec2:Describe*"]
         Resource = "*"
       },
+{
+        # Only the "instance" resource type supports ec2:InstanceType condition
+        Sid      = "EC2LaunchRestrictedType"
+        Effect   = "Allow"
+        Action   = ["ec2:RunInstances", "ec2:TerminateInstances", "ec2:StopInstances", "ec2:StartInstances", "ec2:ModifyInstanceAttribute"]
+        Resource = "arn:aws:ec2:*:*:instance/*"
+        Condition = {
+          StringEquals = {
+            "ec2:InstanceType" = ["t3.nano", "t3.micro"]
+          }
+        }
+      },
       {
-        # Write actions - only allowed for instances requesting a cheap type
-        Sid    = "EC2WriteRestrictedType"
+        # RunInstances also touches these resource types - no InstanceType
+        # condition applies to them, so they can't share the statement above
+        Sid    = "EC2LaunchSupportingResources"
         Effect = "Allow"
-        Action = [
-          "ec2:RunInstances",
-          "ec2:TerminateInstances",
-          "ec2:StopInstances",
-          "ec2:StartInstances",
-          "ec2:ModifyInstanceAttribute"
-        ]
+        Action = ["ec2:RunInstances"]
         Resource = [
-          "arn:aws:ec2:*:*:instance/*",
           "arn:aws:ec2:*:*:volume/*",
           "arn:aws:ec2:*:*:network-interface/*",
           "arn:aws:ec2:*:*:security-group/*",
           "arn:aws:ec2:*:*:subnet/*",
           "arn:aws:ec2:*:*:key-pair/*"
         ]
-        Condition = {
-          StringEquals = {
-            "ec2:InstanceType" = ["t3.nano", "t3.micro"]
-          }
-        }
       },
       {
         # Safety net: explicitly DENY launching anything NOT in the cheap
