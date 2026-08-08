@@ -10,6 +10,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false   # let all three environments report their own result instead of failing fast, default is true(no entry)
       matrix:
         environment: [dev, test, prod]
     defaults:
