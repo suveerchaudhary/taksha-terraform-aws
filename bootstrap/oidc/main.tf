@@ -82,12 +82,14 @@ resource "aws_iam_role_policy" "permissions" {
         }
       },
       {
-        # RunInstances also touches these resource types - no InstanceType
-        # condition applies to them, so they can't share the statement above
+        # RunInstances also touches AMI images and these resource types - no
+        # InstanceType condition applies to them, so they can't share the
+        # statement above
         Sid    = "EC2LaunchSupportingResources"
         Effect = "Allow"
         Action = ["ec2:RunInstances"]
         Resource = [
+          "arn:aws:ec2:*::image/*",
           "arn:aws:ec2:*:*:volume/*",
           "arn:aws:ec2:*:*:network-interface/*",
           "arn:aws:ec2:*:*:security-group/*",
