@@ -47,10 +47,11 @@ resource "aws_security_group" "ssh_access" {
 
 #EC2 Instance
 resource "aws_instance" "ec2_instance" {
-  ami                    = data.aws_ami.amazon_linux.id
-  instance_type          = var.instance_type
-  subnet_id              = data.aws_subnets.default.ids[0]
-  vpc_security_group_ids = [aws_security_group.ssh_access.id]
+  ami                     = data.aws_ami.amazon_linux.id
+  instance_type           = var.instance_type
+  subnet_id               = data.aws_subnets.default.ids[0]
+  vpc_security_group_ids  = [aws_security_group.ssh_access.id]
+  disable_api_termination = var.enable_termination_protection
 
   tags = { Name = "${var.environment}-web-server" }
 }

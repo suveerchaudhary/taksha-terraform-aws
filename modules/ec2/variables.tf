@@ -13,3 +13,9 @@ variable "allowed_ssh_cidr" {
   type        = string
   description = "Your IP in CIDR form, e.g. 203.0.113.4/32"
 }
+
+variable "enable_termination_protection" {
+  type        = bool
+  description = "If true, enables EC2 instance termination protection"
+  default     = false
+}
