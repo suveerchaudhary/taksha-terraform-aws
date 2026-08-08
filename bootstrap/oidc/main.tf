@@ -69,27 +69,12 @@ resource "aws_iam_role_policy" "permissions" {
         Action   = ["ec2:Describe*"]
         Resource = "*"
       },
-      {
-        # Write actions - only allowed for instances requesting a cheap type
-        Sid    = "EC2WriteRestrictedType"
-        Effect = "Allow"
-        Action = [
-          "ec2:RunInstances",
-          "ec2:TerminateInstances",
-          "ec2:StopInstances",
-          "ec2:StartInstances",
-          "ec2:CreateTags",
-          "ec2:DeleteTags",
-          "ec2:ModifyInstanceAttribute"
-        ]
-        Resource = [
-          "arn:aws:ec2:*:*:instance/*",
-          "arn:aws:ec2:*:*:volume/*",
-          "arn:aws:ec2:*:*:network-interface/*",
-          "arn:aws:ec2:*:*:security-group/*",
-          "arn:aws:ec2:*:*:subnet/*",
-          "arn:aws:ec2:*:*:key-pair/*"
-        ]
+{
+        # Only the "instance" resource type supports ec2:InstanceType condition
+        Sid      = "EC2LaunchRestrictedType"
+        Effect   = "Allow"
+        Action   = ["ec2:RunInstances", "ec2:TerminateInstances", "ec2:StopInstances", "ec2:StartInstances", "ec2:ModifyInstanceAttribute"]
+        Resource = "arn:aws:ec2:*:*:instance/*"
         Condition = {
           StringEquals = {
             "ec2:InstanceType" = ["t3.nano", "t3.micro"]
@@ -97,14 +82,30 @@ resource "aws_iam_role_policy" "permissions" {
         }
       },
       {
+        # RunInstances also touches AMI images and these resource types - no
+        # InstanceType condition applies to them, so they can't share the
+        # statement above
+        Sid    = "EC2LaunchSupportingResources"
+        Effect = "Allow"
+        Action = ["ec2:RunInstances"]
+        Resource = [
+          "arn:aws:ec2:*::image/*",
+          "arn:aws:ec2:*:*:volume/*",
+          "arn:aws:ec2:*:*:network-interface/*",
+          "arn:aws:ec2:*:*:security-group/*",
+          "arn:aws:ec2:*:*:subnet/*",
+          "arn:aws:ec2:*:*:key-pair/*"
+        ]
+      },
+      {
         # Safety net: explicitly DENY launching anything NOT in the cheap
         # list, regardless of what any Allow statement says. Deny always
         # wins in IAM - this protects against a typo'd instance_type even
         # if the condition above were ever misconfigured.
-        Sid       = "DenyExpensiveInstanceTypes"
-        Effect    = "Deny"
-        Action    = "ec2:RunInstances"
-        Resource  = "arn:aws:ec2:*:*:instance/*"
+        Sid      = "DenyExpensiveInstanceTypes"
+        Effect   = "Deny"
+        Action   = "ec2:RunInstances"
+        Resource = "arn:aws:ec2:*:*:instance/*"
         Condition = {
           StringNotEquals = {
             "ec2:InstanceType" = ["t3.nano", "t3.micro"]
@@ -113,7 +114,7 @@ resource "aws_iam_role_policy" "permissions" {
       },
       {
         # Allow creation, deletion, and modification of security groups
-        Sid    = "SecurityGroupManagement"
+        Sid    = "SecurityGroupAndTagManagement"
         Effect = "Allow"
         Action = [
           "ec2:CreateSecurityGroup",
@@ -121,15 +122,17 @@ resource "aws_iam_role_policy" "permissions" {
           "ec2:AuthorizeSecurityGroupIngress",
           "ec2:AuthorizeSecurityGroupEgress",
           "ec2:RevokeSecurityGroupIngress",
-          "ec2:RevokeSecurityGroupEgress"
+          "ec2:RevokeSecurityGroupEgress",
+          "ec2:CreateTags",
+          "ec2:DeleteTags"
         ]
         Resource = "*"
       },
       {
         # Allow read, write, and list operations on the state bucket
-        Sid      = "StateBucket"
-        Effect   = "Allow"
-        Action   = ["s3:GetObject", "s3:PutObject", "s3:ListBucket"]
+        Sid    = "StateBucket"
+        Effect = "Allow"
+        Action = ["s3:GetObject", "s3:PutObject", "s3:ListBucket"]
         Resource = [
           "arn:aws:s3:::taksha-tf-state-bucket-219322923434",
           "arn:aws:s3:::taksha-tf-state-bucket-219322923434/*"
