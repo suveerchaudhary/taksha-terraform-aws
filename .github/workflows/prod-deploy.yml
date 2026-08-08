@@ -14,6 +14,7 @@ permissions:
 jobs:
   plan:
     runs-on: ubuntu-latest
+    environment: prod   # <-- required reviewer approval happens here
     defaults:
       run:
         working-directory: environments/prod
@@ -22,7 +23,7 @@ jobs:
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}  #  Environment secret for prod,set in Git Hub Settings
           aws-region: us-west-2
 
       - uses: hashicorp/setup-terraform@v3
@@ -54,7 +55,7 @@ jobs:
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }} #  Environment secret for prod,set in Git Hub Settings
           aws-region: us-west-2
 
       - uses: hashicorp/setup-terraform@v3
