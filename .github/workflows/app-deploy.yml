@@ -25,6 +25,7 @@ permissions:
 jobs:
   plan:
     runs-on: ubuntu-latest
+    environment: app-group
     defaults:
       run:
         working-directory: app_group/${{ inputs.app_group }}
