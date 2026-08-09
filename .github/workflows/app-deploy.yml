@@ -1,0 +1,57 @@
+# Manually triggered - pick which app_group module and what to do.
+# app_group modules are sandbox/learning, never auto-deploy.
+name: App Group - Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_group:
+        description: 'Which module'
+        required: true
+        type: choice
+        options:
+          - vpc
+          - iam-team-users
+      action:
+        description: 'What to run'
+        required: true
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    environment: app-group   # new environment - see note below
+    defaults:
+      run:
+        working-directory: app_group/${{ inputs.app_group }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-west-2
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - run: terraform init
+      - run: terraform validate
+
+      - if: inputs.action == 'plan'
+        run: terraform plan
+
+      - if: inputs.action == 'apply'
+        run: terraform apply -auto-approve
+
+      - if: inputs.action == 'destroy'
+        run: terraform destroy -auto-approve

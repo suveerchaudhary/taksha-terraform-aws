@@ -27,7 +27,7 @@ resource "aws_iam_openid_connect_provider" "github" {
 # coming from suveerchaudhary/taksha-terraform-aws, running under that
 # specific GitHub Environment (dev/test/prod).
 resource "aws_iam_role" "github_actions" {
-  for_each = toset(["dev", "test", "prod"])
+  for_each = toset(["dev", "test", "prod", "app-group"])
 
   name = "github-actions-taksha-terraform-aws-${each.key}"
 
@@ -55,7 +55,7 @@ resource "aws_iam_role" "github_actions" {
 # Permissions each role gets - scoped to what Terraform actually needs:
 # EC2 for the resources we deploy, plus S3/DynamoDB for state access.
 resource "aws_iam_role_policy" "permissions" {
-  for_each = aws_iam_role.github_actions
+  for_each = { for k, v in aws_iam_role.github_actions : k => v if k != "app-group" }
 
   name = "terraform-permissions"
   role = each.value.id
@@ -69,7 +69,7 @@ resource "aws_iam_role_policy" "permissions" {
         Action   = ["ec2:Describe*"]
         Resource = "*"
       },
-{
+      {
         # Only the "instance" resource type supports ec2:InstanceType condition
         Sid      = "EC2LaunchRestrictedType"
         Effect   = "Allow"
@@ -140,6 +140,75 @@ resource "aws_iam_role_policy" "permissions" {
       },
       {
         # Allow read, write, and delete operations on the state lock table
+        Sid      = "StateLock"
+        Effect   = "Allow"
+        Action   = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem"]
+        Resource = "arn:aws:dynamodb:*:*:table/taksha-tf-state-locks"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "app_group_permissions" {
+  name = "terraform-permissions-app-group"
+  role = aws_iam_role.github_actions["app-group"].id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid      = "ReadOnly"
+        Effect   = "Allow"
+        Action   = ["ec2:Describe*", "iam:Get*", "iam:List*"]
+        Resource = "*"
+      },
+      {
+        # VPC networking - most of these actions don't support resource-level
+        # restriction pre-creation, same limitation we hit with security groups
+        Sid    = "VPCManagement"
+        Effect = "Allow"
+        Action = [
+          "ec2:CreateVpc", "ec2:DeleteVpc", "ec2:ModifyVpcAttribute",
+          "ec2:CreateSubnet", "ec2:DeleteSubnet",
+          "ec2:CreateInternetGateway", "ec2:DeleteInternetGateway",
+          "ec2:AttachInternetGateway", "ec2:DetachInternetGateway",
+          "ec2:CreateNatGateway", "ec2:DeleteNatGateway",
+          "ec2:AllocateAddress", "ec2:ReleaseAddress",
+          "ec2:AssociateAddress", "ec2:DisassociateAddress",
+          "ec2:CreateRouteTable", "ec2:DeleteRouteTable",
+          "ec2:CreateRoute", "ec2:DeleteRoute",
+          "ec2:AssociateRouteTable", "ec2:DisassociateRouteTable",
+          "ec2:CreateTags", "ec2:DeleteTags"
+        ]
+        Resource = "*"
+      },
+      {
+        # IAM user/group provisioning - deliberately broad for practice speed,
+        # same trade-off we made for EC2 initially. Tightening this to exact
+        # resource ARNs is a legitimate follow-up exercise.
+        Sid    = "IAMTeamProvisioning"
+        Effect = "Allow"
+        Action = [
+          "iam:CreateUser", "iam:DeleteUser", "iam:TagUser", "iam:UntagUser",
+          "iam:CreateGroup", "iam:DeleteGroup",
+          "iam:AddUserToGroup", "iam:RemoveUserFromGroup",
+          "iam:AttachGroupPolicy", "iam:DetachGroupPolicy",
+          "iam:PutGroupPolicy", "iam:DeleteGroupPolicy",
+          "iam:CreatePolicy", "iam:DeletePolicy",
+          "iam:CreateLoginProfile", "iam:DeleteLoginProfile", "iam:UpdateLoginProfile"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "StateBucket"
+        Effect = "Allow"
+        Action = ["s3:GetObject", "s3:PutObject", "s3:ListBucket"]
+        Resource = [
+          "arn:aws:s3:::taksha-tf-state-bucket-219322923434",
+          "arn:aws:s3:::taksha-tf-state-bucket-219322923434/*"
+        ]
+      },
+      {
         Sid      = "StateLock"
         Effect   = "Allow"
         Action   = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem"]
