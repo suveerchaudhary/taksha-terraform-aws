@@ -129,6 +129,26 @@ resource "aws_iam_role_policy" "permissions" {
         Resource = "*"
       },
       {
+        # VPC networking - most of these actions don't support resource-level
+        # restriction pre-creation, same limitation we hit with security groups
+        Sid    = "VPCManagement"
+        Effect = "Allow"
+        Action = [
+          "ec2:CreateVpc", "ec2:DeleteVpc", "ec2:ModifyVpcAttribute",
+          "ec2:CreateSubnet", "ec2:DeleteSubnet", "ec2:ModifySubnetAttribute",
+          "ec2:CreateInternetGateway", "ec2:DeleteInternetGateway",
+          "ec2:AttachInternetGateway", "ec2:DetachInternetGateway",
+          "ec2:CreateNatGateway", "ec2:DeleteNatGateway",
+          "ec2:AllocateAddress", "ec2:ReleaseAddress",
+          "ec2:AssociateAddress", "ec2:DisassociateAddress",
+          "ec2:CreateRouteTable", "ec2:DeleteRouteTable",
+          "ec2:CreateRoute", "ec2:DeleteRoute",
+          "ec2:AssociateRouteTable", "ec2:DisassociateRouteTable",
+          "ec2:CreateTags", "ec2:DeleteTags"
+        ]
+        Resource = "*"
+      },
+      {
         # Allow read, write, and list operations on the state bucket
         Sid    = "StateBucket"
         Effect = "Allow"
@@ -160,26 +180,6 @@ resource "aws_iam_role_policy" "app_group_permissions" {
         Sid      = "ReadOnly"
         Effect   = "Allow"
         Action   = ["ec2:Describe*", "iam:Get*", "iam:List*"]
-        Resource = "*"
-      },
-      {
-        # VPC networking - most of these actions don't support resource-level
-        # restriction pre-creation, same limitation we hit with security groups
-        Sid    = "VPCManagement"
-        Effect = "Allow"
-        Action = [
-          "ec2:CreateVpc", "ec2:DeleteVpc", "ec2:ModifyVpcAttribute",
-          "ec2:CreateSubnet", "ec2:DeleteSubnet", "ec2:ModifySubnetAttribute",
-          "ec2:CreateInternetGateway", "ec2:DeleteInternetGateway",
-          "ec2:AttachInternetGateway", "ec2:DetachInternetGateway",
-          "ec2:CreateNatGateway", "ec2:DeleteNatGateway",
-          "ec2:AllocateAddress", "ec2:ReleaseAddress",
-          "ec2:AssociateAddress", "ec2:DisassociateAddress",
-          "ec2:CreateRouteTable", "ec2:DeleteRouteTable",
-          "ec2:CreateRoute", "ec2:DeleteRoute",
-          "ec2:AssociateRouteTable", "ec2:DisassociateRouteTable",
-          "ec2:CreateTags", "ec2:DeleteTags"
-        ]
         Resource = "*"
       },
       {
