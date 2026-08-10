@@ -169,7 +169,7 @@ resource "aws_iam_role_policy" "app_group_permissions" {
         Effect = "Allow"
         Action = [
           "ec2:CreateVpc", "ec2:DeleteVpc", "ec2:ModifyVpcAttribute",
-          "ec2:CreateSubnet", "ec2:DeleteSubnet",
+          "ec2:CreateSubnet", "ec2:DeleteSubnet", "ec2:ModifySubnetAttribute",
           "ec2:CreateInternetGateway", "ec2:DeleteInternetGateway",
           "ec2:AttachInternetGateway", "ec2:DetachInternetGateway",
           "ec2:CreateNatGateway", "ec2:DeleteNatGateway",
