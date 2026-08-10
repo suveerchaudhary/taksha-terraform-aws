@@ -8,7 +8,6 @@ on:
         required: true
         type: choice
         options:
-          - vpc
           - iam-team-users
       action:
         description: 'apply or destroy (plan always runs first, unattended)'

@@ -1,15 +1,6 @@
-# Uses account's default VPC/Sunet so we dont need custom networking yet
-data "aws_vpc" "default" {
-  default = true
-}
+# This is the main.tf file for the EC2 module which provides an EC2 instance
 
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
-  }
-}
-
+# Get the latest Amazon Linux 2023 AMI
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"] #restricts the search to AMIs published by Amazon itself
@@ -26,14 +17,16 @@ data "aws_ami" "amazon_linux" {
 #Security Group for SSH access - only allows SSH from your own IP
 resource "aws_security_group" "ssh_access" {
   name   = "${var.environment}-ec2-sg"
-  vpc_id = data.aws_vpc.default.id
+  vpc_id = var.vpc_id
 
+  #Ingress rule for SSH access
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = [var.allowed_ssh_cidr]
   }
+  #Egress rule for all traffic
   egress {
     from_port   = 0
     to_port     = 0
@@ -49,7 +42,7 @@ resource "aws_security_group" "ssh_access" {
 resource "aws_instance" "ec2_instance" {
   ami                     = data.aws_ami.amazon_linux.id
   instance_type           = var.instance_type
-  subnet_id               = data.aws_subnets.default.ids[0]
+  subnet_id               = var.subnet_id
   vpc_security_group_ids  = [aws_security_group.ssh_access.id]
   disable_api_termination = var.enable_termination_protection
 
