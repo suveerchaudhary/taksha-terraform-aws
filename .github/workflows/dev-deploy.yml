@@ -45,6 +45,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: dev   # maps to the GitHub Environment you just configured
+    env:
+      # Set in GitHub → Environments → dev → Variables (JSON list of IAM ARNs).
+      # Not committed to the repo. Local applies still use cluster-admin.auto.tfvars.
+      TF_VAR_cluster_admin_arns: ${{ vars.TF_VAR_cluster_admin_arns }}
     defaults:
       run:
         working-directory: environments/dev
