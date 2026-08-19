@@ -9,3 +9,10 @@ variable "allowed_ssh_cidr" {
   type        = string
   description = "Your IP in CIDR form, e.g. 203.0.113.4/32"
 }
+
+# Whether to enable NAT Gateway for private subnets
+variable "enable_nat" {
+  type = bool
+  #default to  false,NAT suppressed, cost-safe by default. Each instance is 1 hour charged for NAT usage.
+  default = false
+}

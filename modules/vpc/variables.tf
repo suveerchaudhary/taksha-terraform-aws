@@ -20,5 +20,6 @@ variable "azs" {
 # Whether to enable NAT Gateway for private subnets
 variable "enable_nat" {
   type    = bool
-  default = true
+  #default to  false,NAT suppressed, cost-safe by default. Each instance is 1 hour charged for NAT usage.
+  default = false 
 }

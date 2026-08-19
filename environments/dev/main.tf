@@ -33,5 +33,15 @@ module "vpc" {
 
   environment = "dev"
   vpc_cidr    = "10.0.0.0/16" # CIDR block for the VPC , 0 for dev, 1 for test, 2 for prod
-  enable_nat  = true
+  enable_nat  = var.enable_nat
+}
+
+# EKS module call for dev
+module "eks" {
+  source = "../../modules/eks"
+
+  environment        = "dev"
+  vpc_id             = module.vpc.vpc_id
+  private_subnet_ids = module.vpc.private_subnet_ids
+  public_subnet_ids  = module.vpc.public_subnet_ids
 }
