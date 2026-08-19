@@ -25,3 +25,10 @@ variable "node_instance_type" {
   type    = string
   default = "t3.small"
 }
+
+# IAM user/role ARNs to grant cluster-admin access to
+variable "cluster_admin_arns" {
+  type        = list(string)
+  description = "IAM user/role ARNs to grant cluster-admin access to"
+  default     = []
+}

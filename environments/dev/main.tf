@@ -41,8 +41,9 @@ module "eks" {
   count  = var.enable_eks ? 1 : 0 # Only create EKS module if enable_eks is true
   source = "../../modules/eks"
 
-  environment        = "dev"
-  vpc_id             = module.vpc.vpc_id
-  private_subnet_ids = module.vpc.private_subnet_ids
-  public_subnet_ids  = module.vpc.public_subnet_ids
+  environment         = "dev"
+  vpc_id              = module.vpc.vpc_id
+  private_subnet_ids  = module.vpc.private_subnet_ids
+  public_subnet_ids   = module.vpc.public_subnet_ids
+  cluster_admin_arns  = var.cluster_admin_arns
 }

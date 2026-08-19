@@ -159,6 +159,8 @@ resource "aws_iam_role_policy" "permissions" {
           "eks:CreateNodegroup", "eks:DeleteNodegroup", "eks:DescribeNodegroup", "eks:ListNodegroups",
           "eks:UpdateNodegroupConfig", "eks:UpdateNodegroupVersion",
           "eks:DescribeUpdate", "eks:ListUpdates",
+          "eks:CreateAccessEntry", "eks:DeleteAccessEntry", "eks:DescribeAccessEntry", "eks:ListAccessEntries",
+          "eks:AssociateAccessPolicy", "eks:DisassociateAccessPolicy", "eks:ListAssociatedAccessPolicies",
           "eks:TagResource", "eks:UntagResource", "eks:ListTagsForResource"
         ]
         Resource = "*"

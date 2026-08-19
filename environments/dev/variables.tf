@@ -22,3 +22,10 @@ variable "enable_eks" {
   type    = bool
   default = false # EKS is not enabled by default
 }
+
+# IAM principals granted EKS cluster-admin via access entries (see modules/eks)
+variable "cluster_admin_arns" {
+  type        = list(string)
+  description = "IAM user/role ARNs granted AmazonEKSClusterAdminPolicy on the EKS cluster"
+  default     = []
+}

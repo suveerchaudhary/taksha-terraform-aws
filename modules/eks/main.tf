@@ -24,6 +24,12 @@ resource "aws_eks_cluster" "this" {
   name     = "${var.environment}-eks"
   role_arn = aws_iam_role.eks_cluster.arn
 
+  # API mode is required for aws_eks_access_entry / access policy associations.
+  # CONFIG_MAP kept as well so aws-auth still works if you ever use it.
+  access_config {
+    authentication_mode = "API_AND_CONFIG_MAP"
+  }
+
   vpc_config {
     subnet_ids = concat(var.public_subnet_ids, var.private_subnet_ids)
   }
@@ -82,4 +88,25 @@ resource "aws_eks_node_group" "this" {
     aws_iam_role_policy_attachment.eks_cni,
     aws_iam_role_policy_attachment.eks_ecr_readonly
   ]
+}
+
+# Allow the cluster admins to access the EKS cluster
+resource "aws_eks_access_entry" "admins" {
+  for_each      = toset(var.cluster_admin_arns)
+  cluster_name  = aws_eks_cluster.this.name
+  principal_arn = each.value
+}
+
+# Grant the cluster admins access to the EKS cluster
+resource "aws_eks_access_policy_association" "admins" {
+  for_each      = toset(var.cluster_admin_arns)
+  cluster_name  = aws_eks_cluster.this.name
+  principal_arn = each.value
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+  access_scope {
+    type = "cluster"
+  }
+
+  depends_on = [aws_eks_access_entry.admins]
 }
