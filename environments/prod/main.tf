@@ -18,7 +18,7 @@ module "vpc" {
 
   environment = "prod"
   vpc_cidr    = "10.2.0.0/16" # CIDR block for the VPC , 0 for dev, 1 for test, 2 for prod
-  enable_nat  = true
+  enable_nat  = var.enable_nat
 }
 
 module "ec2" {
