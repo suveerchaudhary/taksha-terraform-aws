@@ -16,3 +16,9 @@ variable "enable_nat" {
   #default to  false,NAT suppressed, cost-safe by default. Each instance is 1 hour charged for NAT usage.
   default = false
 }
+
+# Whether to enable EKS
+variable "enable_eks" {
+  type    = bool
+  default = false # EKS is not enabled by default
+}

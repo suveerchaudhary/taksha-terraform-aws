@@ -14,7 +14,7 @@ on:
       - 'modules/**'
   workflow_dispatch:
     inputs:
-      instance_type:
+      instance_type: # EC2 instance type (IAM allows t3.nano/t3.micro only)
         description: 'EC2 instance type (IAM allows t3.nano/t3.micro only)'
         type: choice
         required: true
@@ -23,7 +23,20 @@ on:
           - t3.nano
           - t3.micro
           - t3.large
+      enable_eks: # Whether to enable EKS
+        description: 'Deploy EKS cluster? (slow, ~$0.10/hr while running)'
+        required: false
+        type: choice
+        options: ['false', 'true']
+        default: 'false'
+      enable_nat: # Whether to enable NAT Gateway, must be true if EKS enabled
+        description: 'Enable NAT Gateway? (required if enable_eks=true)'
+        required: false
+        type: choice
+        options: ['false', 'true']
+        default: 'false'
 
+          
 permissions:
   id-token: write   # required for OIDC - lets this job request a short-lived AWS token
   contents: read
@@ -53,6 +66,8 @@ jobs:
         run: |
           echo "instance_type=${{ inputs.instance_type }}" >> "$GITHUB_ENV"
           echo "TF_VAR_instance_type=${{ inputs.instance_type }}" >> "$GITHUB_ENV"
+          echo "TF_VAR_enable_eks=${{ inputs.enable_eks }}" >> "$GITHUB_ENV"
+          echo "TF_VAR_enable_nat=${{ inputs.enable_nat }}" >> "$GITHUB_ENV"
 
       - run: terraform init
       - run: terraform validate

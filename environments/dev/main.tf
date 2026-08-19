@@ -38,6 +38,7 @@ module "vpc" {
 
 # EKS module call for dev
 module "eks" {
+  count  = var.enable_eks ? 1 : 0 # Only create EKS module if enable_eks is true
   source = "../../modules/eks"
 
   environment        = "dev"

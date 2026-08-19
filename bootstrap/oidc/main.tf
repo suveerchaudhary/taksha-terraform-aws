@@ -149,6 +149,50 @@ resource "aws_iam_role_policy" "permissions" {
         Resource = "*"
       },
       {
+        # Cluster + managed node group lifecycle. Update*/DescribeUpdate are
+        # required for Terraform refreshes and in-place scaling/version changes.
+        Sid    = "EKSManagement"
+        Effect = "Allow"
+        Action = [
+          "eks:CreateCluster", "eks:DeleteCluster", "eks:DescribeCluster", "eks:ListClusters",
+          "eks:UpdateClusterConfig", "eks:UpdateClusterVersion",
+          "eks:CreateNodegroup", "eks:DeleteNodegroup", "eks:DescribeNodegroup", "eks:ListNodegroups",
+          "eks:UpdateNodegroupConfig", "eks:UpdateNodegroupVersion",
+          "eks:DescribeUpdate", "eks:ListUpdates",
+          "eks:TagResource", "eks:UntagResource", "eks:ListTagsForResource"
+        ]
+        Resource = "*"
+      },
+      {
+        # Managed node groups are created by the EKS nodegroup service-linked
+        # role (ASG/LT/EC2), not by this GitHub role directly. Keep a narrow
+        # describe set so Terraform can still read related resources if needed.
+        Sid    = "AutoScalingDescribeForEKS"
+        Effect = "Allow"
+        Action = [
+          "autoscaling:DescribeAutoScalingGroups",
+          "autoscaling:DescribeScalingActivities",
+          "autoscaling:DescribeTags"
+        ]
+        Resource = "*"
+      },
+      {
+        # Cluster role + node role create/attach/pass. CreateServiceLinkedRole
+        # is required the first time an account creates EKS / nodegroups.
+        Sid    = "IAMForEKSRoles"
+        Effect = "Allow"
+        Action = [
+          "iam:CreateRole", "iam:DeleteRole", "iam:GetRole", "iam:ListRoles",
+          "iam:UpdateAssumeRolePolicy",
+          "iam:PutRolePolicy", "iam:DeleteRolePolicy", "iam:GetRolePolicy", "iam:ListRolePolicies",
+          "iam:AttachRolePolicy", "iam:DetachRolePolicy", "iam:ListAttachedRolePolicies",
+          "iam:ListInstanceProfilesForRole", "iam:PassRole",
+          "iam:TagRole", "iam:UntagRole",
+          "iam:CreateServiceLinkedRole"
+        ]
+        Resource = "*"
+      },
+      {
         # Allow read, write, and list operations on the state bucket
         Sid    = "StateBucket"
         Effect = "Allow"
